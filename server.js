@@ -5,7 +5,6 @@ require("dotenv").config()
 const app = express()
 app.use(express.json())
 
-// DB 초기화
 const db = new Database("bans.db")
 
 db.prepare(`
@@ -18,7 +17,6 @@ CREATE TABLE IF NOT EXISTS bans (
 )
 `).run()
 
-// 공통 CORS
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*")
   res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
@@ -27,7 +25,6 @@ app.use((req, res, next) => {
   next()
 })
 
-// 🔑 인증
 function checkAuth(req) {
   const secret =
     req.headers["x-shared-secret"] ||
@@ -39,7 +36,6 @@ function checkAuth(req) {
   )
 }
 
-// Roblox Messaging
 async function pushToRoblox(payload) {
   try {
     await fetch(
@@ -58,7 +54,6 @@ async function pushToRoblox(payload) {
   }
 }
 
-// 🚫 밴
 app.post("/ban/:id", async (req, res) => {
   if (!checkAuth(req)) return res.status(401).json({ error: "Unauthorized" })
 
@@ -92,7 +87,6 @@ app.post("/ban/:id", async (req, res) => {
   res.json({ robloxId, banned: true, action: "ban", ...record })
 })
 
-// ❌ 언밴
 app.delete("/ban/:id", async (req, res) => {
   if (!checkAuth(req)) return res.status(401).json({ error: "Unauthorized" })
 
@@ -109,7 +103,6 @@ app.delete("/ban/:id", async (req, res) => {
   res.json({ robloxId, banned: false, action: "unban" })
 })
 
-// 🔍 조회
 app.get("/banned/:id", (req, res) => {
   if (!checkAuth(req)) return res.status(401).json({ error: "Unauthorized" })
 
@@ -134,7 +127,6 @@ app.get("/banned/:id", (req, res) => {
   })
 })
 
-// 📦 bulk
 app.post("/banned/bulk", (req, res) => {
   if (!checkAuth(req)) return res.status(401).json({ error: "Unauthorized" })
 
@@ -151,29 +143,6 @@ app.post("/banned/bulk", (req, res) => {
   res.json({ bans })
 })
 
-// 🚨 shutdown
-app.post("/shutdown/:id", async (req, res) => {
-  if (!checkAuth(req)) return res.status(401).json({ error: "Unauthorized" })
-
-  try {
-    await fetch(
-      `https://apis.roblox.com/messaging-service/v1/universes/${req.params.id}/topics/Shutdown`,
-      {
-        method: "POST",
-        headers: {
-          "x-api-key": process.env.ROBLOX_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: "shutdown" }),
-      }
-    )
-
-    res.json({ ok: true })
-  } catch (err) {
-    res.status(500).json({ error: String(err) })
-  }
-})
-
 app.listen(3000, () => {
-  console.log("🚀 http://localhost:3000")
+  console.log("Server Started [PORT NUMBER: 3000] --> http://localhost:3000")
 })

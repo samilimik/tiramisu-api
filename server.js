@@ -143,6 +143,24 @@ app.post("/banned/bulk", (req, res) => {
   res.json({ bans })
 })
 
+app.use((req, res, next) => {
+  const err = new Error("Not Found")
+  err.status = 404
+  next(err)
+})
+
+app.use((err, req, res, next) => {
+  console.error(err)
+
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+    status: err.status || 500,
+    path: req.originalUrl,
+    method: req.method,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined
+  })
+})
+
 app.listen(3000, () => {
   console.log("Server Started [PORT NUMBER: 3000] --> http://localhost:3000")
 })
